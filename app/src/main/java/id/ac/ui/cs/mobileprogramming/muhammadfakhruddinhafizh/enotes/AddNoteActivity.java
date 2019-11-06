@@ -36,6 +36,7 @@ public class AddNoteActivity extends AppCompatActivity {
     private NoteDatabase noteDatabase;
     private Note note;
     private boolean update;
+    private String imagePath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +46,7 @@ public class AddNoteActivity extends AppCompatActivity {
         content = findViewById(R.id.content);
         imageView = findViewById(R.id.imageView);
         noteDatabase = NoteDatabase.getInstance(AddNoteActivity.this);
+        imagePath = null;
         Button btnSave = findViewById(R.id.btnsave);
         Button btnAddImg = findViewById(R.id.btnImage);
         if ( (note = (Note) getIntent().getSerializableExtra("note"))!=null ){
@@ -53,6 +55,9 @@ public class AddNoteActivity extends AppCompatActivity {
             btnSave.setText("Update");
             title.setText(note.getTitle());
             content.setText(note.getContent());
+            if (note.getImagePath()!=null) {
+                imageView.setImageBitmap(BitmapFactory.decodeFile(note.getImagePath()));
+            }
         }
 
         btnSave.setOnClickListener(new View.OnClickListener() {
@@ -61,10 +66,11 @@ public class AddNoteActivity extends AppCompatActivity {
                 if (update){
                     note.setContent(content.getText().toString());
                     note.setTitle(title.getText().toString());
+                    note.setImagePath(imagePath);
                     noteDatabase.getNoteDao().updateNote(note);
                     setResult(note,2);
                 }else {
-                    note = new Note(content.getText().toString(), title.getText().toString());
+                    note = new Note(content.getText().toString(), title.getText().toString(), imagePath);
                     new InsertTask(AddNoteActivity.this,note).execute();
                 }
             }
@@ -149,6 +155,7 @@ public class AddNoteActivity extends AppCompatActivity {
                     cursor.close();
                     // Set the Image in ImageView after decoding the String
                     imageView.setImageBitmap(BitmapFactory.decodeFile(imgDecodableString));
+                    imagePath = imgDecodableString;
                     break;
             }
 

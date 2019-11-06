@@ -1,10 +1,12 @@
 package id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.adapter;
 
 import android.content.Context;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
@@ -40,6 +42,13 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.BeanHolder> 
         Log.e("bind", "onBindViewHolder: "+ list.get(position));
         holder.textViewTitle.setText(list.get(position).getTitle());
         holder.textViewContent.setText(list.get(position).getContent());
+        String imagePath = list.get(position).getImagePath();
+        if (imagePath != null) {
+            holder.notesImage.setImageBitmap(BitmapFactory.decodeFile(imagePath));
+        }
+        else {
+            holder.notesImage.setMaxHeight(0);
+        }
     }
 
     @Override
@@ -51,11 +60,13 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.BeanHolder> 
 
         TextView textViewContent;
         TextView textViewTitle;
+        ImageView notesImage;
         public BeanHolder(View itemView) {
             super(itemView);
             itemView.setOnClickListener(this);
             textViewContent = itemView.findViewById(R.id.item_text);
             textViewTitle = itemView.findViewById(R.id.tv_title);
+            notesImage = itemView.findViewById(R.id.notesImage);
         }
 
         @Override

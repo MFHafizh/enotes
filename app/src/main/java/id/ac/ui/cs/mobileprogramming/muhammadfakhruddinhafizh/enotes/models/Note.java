@@ -1,5 +1,6 @@
 package id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.models;
 
+import androidx.annotation.Nullable;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
@@ -23,11 +24,17 @@ public class Note implements Serializable {
 
     private Long dateLong;
 
-    public Note(String content, String title) {
+    private String imagePath;
+
+    public Note(String content, String title, @Nullable String imagePath) {
         this.content = content;
         this.title = title;
         this.dateLong = System.currentTimeMillis();
+        if (imagePath != null) {
+            this.imagePath = imagePath;
+        }
     }
+
 
 
     public Long getDateLong() {
@@ -56,6 +63,14 @@ public class Note implements Serializable {
 
     public String getContent() {
         return content;
+    }
+
+    public String getImagePath() {
+        return imagePath;
+    }
+
+    public void setImagePath(String imagePath) {
+        this.imagePath = imagePath;
     }
 
     public void setContent(String content) {
