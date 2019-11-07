@@ -66,7 +66,7 @@ public class AddNoteActivity extends AppCompatActivity {
                 if (update){
                     note.setContent(content.getText().toString());
                     note.setTitle(title.getText().toString());
-                    note.setImagePath(imagePath);
+                    setNoteImage(note, imagePath);
                     noteDatabase.getNoteDao().updateNote(note);
                     setResult(note,2);
                 }else {
@@ -190,6 +190,15 @@ public class AddNoteActivity extends AppCompatActivity {
                 //resume tasks needing this permission
                 pickFromGallery();
             }
+        }
+    }
+
+    public void setNoteImage(Note note, @Nullable String imagePath) {
+        if (imagePath != null) {
+            note.setImagePath(imagePath);
+        }
+        else {
+            note.setImagePath(note.getImagePath());
         }
     }
 }
