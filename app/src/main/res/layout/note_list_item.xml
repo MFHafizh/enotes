@@ -16,7 +16,7 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="200dp"
+            android:layout_height="300dp"
             android:layout_margin="2dp"
             android:background="?android:attr/selectableItemBackground"
             android:orientation="vertical">
@@ -25,13 +25,22 @@
                 android:id="@+id/tv_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:paddingTop="@dimen/notes_gap"
                 android:textSize="16sp"
-                tools:text="Title" />
+                tools:text="Title"
+                android:layout_gravity="center"
+                android:maxLines="1"
+                android:textStyle="bold"
+                android:maxLength="15"/>
 
             <ImageView
                 android:id="@+id/notesImage"
                 android:layout_width="match_parent"
-                android:layout_height="120dp"/>
+                android:layout_height="150dp"
+                android:scaleType="fitCenter"
+                android:visibility="gone"
+                android:paddingTop="@dimen/notes_gap"
+                />
 
             <TextView
                 android:id="@+id/item_text"
@@ -39,8 +48,10 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:ellipsize="end"
-                android:maxLines="10"
-                tools:text="Content" />
+                android:maxLines="6"
+                tools:text="Content"
+                android:paddingTop="@dimen/notes_gap"
+                android:paddingLeft="6dp"/>
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>

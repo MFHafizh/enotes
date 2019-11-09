@@ -1,7 +1,9 @@
 package id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.adapter;
 
+import android.app.Application;
 import android.content.Context;
 import android.graphics.BitmapFactory;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -40,14 +42,26 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.BeanHolder> 
     @Override
     public void onBindViewHolder(BeanHolder holder, int position) {
         Log.e("bind", "onBindViewHolder: "+ list.get(position));
-        holder.textViewTitle.setText(list.get(position).getTitle());
-        holder.textViewContent.setText(list.get(position).getContent());
+        boolean isTitleEmpty = TextUtils.isEmpty(list.get(position).getTitle());
+        boolean isContentEmpty = TextUtils.isEmpty(list.get(position).getContent());
+        String title = list.get(position).getTitle();
+        String content = list.get(position).getContent();
+        holder.textViewTitle.setText(title);
+        holder.textViewContent.setText(content);
         String imagePath = list.get(position).getImagePath();
+        holder.textViewTitle.setVisibility(isTitleEmpty ? View.GONE : View.VISIBLE);
+        holder.textViewContent.setVisibility(isContentEmpty ? View.GONE : View.VISIBLE);
         if (imagePath != null) {
             holder.notesImage.setImageBitmap(BitmapFactory.decodeFile(imagePath));
+            holder.notesImage.setVisibility(View.VISIBLE);
         }
         else {
-            holder.notesImage.setMaxHeight(0);
+            if (isTitleEmpty) {
+                holder.textViewContent.setMaxLines(17);
+            }
+            else {
+                holder.textViewContent.setMaxLines(15);
+            }
         }
     }
 

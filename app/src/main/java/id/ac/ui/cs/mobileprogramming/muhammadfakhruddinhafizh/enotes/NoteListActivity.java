@@ -3,34 +3,48 @@ package id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.navigation.NavigationView;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.adapter.NotesAdapter;
 import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.database.NoteDatabase;
 import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.models.Note;
 
-public class NoteListActivity extends AppCompatActivity implements NotesAdapter.OnNoteItemClick{
+public class NoteListActivity extends AppCompatActivity implements NotesAdapter.OnNoteItemClick, NavigationView.OnNavigationItemSelectedListener {
 
     private TextView textViewMsg;
     private RecyclerView recyclerView;
     private NoteDatabase noteDatabase;
     private List<Note> notes;
     private NotesAdapter notesAdapter;
+    private DrawerLayout drawer;
+    private NavigationView navigationView;
     private int pos;
 
 
@@ -38,8 +52,16 @@ public class NoteListActivity extends AppCompatActivity implements NotesAdapter.
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        initializeVies();
+        initializeViews();
+        loadLocale();
         displayList();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_main, menu);
+        return true;
     }
 
     private void displayList(){
@@ -76,9 +98,19 @@ public class NoteListActivity extends AppCompatActivity implements NotesAdapter.
         }
     }
 
-    private void initializeVies(){
+    private void initializeViews(){
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        drawer = findViewById(R.id.drawer_layout);
+        navigationView = findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar,
+                R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawer.addDrawerListener(toggle);
+        toggle.syncState();
+        navigationView.setCheckedItem(R.id.nav_notes);
+
         textViewMsg =  (TextView) findViewById(R.id.tv__empty);
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(listener);
@@ -113,8 +145,8 @@ public class NoteListActivity extends AppCompatActivity implements NotesAdapter.
     @Override
     public void onNoteClick(final int pos) {
         new AlertDialog.Builder(NoteListActivity.this)
-                .setTitle("Select Options")
-                .setItems(new String[]{"Delete", "Update"}, new DialogInterface.OnClickListener() {
+                .setTitle(getString(R.string.select_opt))
+                .setItems(new String[]{getString(R.string.delete), getString(R.string.update)}, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         switch (i){
@@ -151,5 +183,70 @@ public class NoteListActivity extends AppCompatActivity implements NotesAdapter.
     protected void onDestroy() {
         noteDatabase.cleanUp();
         super.onDestroy();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        }
+        else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
+        switch (menuItem.getItemId()) {
+            case R.id.nav_notes:
+                break;
+            case R.id.change_language:
+                showChangeLanguageDialog();
+                break;
+        }
+        drawer.closeDrawer(GravityCompat.START);
+        navigationView.setCheckedItem(R.id.nav_notes);
+        return true;
+    }
+
+    public void showChangeLanguageDialog() {
+        final String[] listLanguage = {"English", "Indonesia"};
+        AlertDialog.Builder builder = new AlertDialog.Builder(NoteListActivity.this);
+        builder.setTitle(getString(R.string.chooseLang));
+        builder.setSingleChoiceItems(listLanguage, -1, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if (which == 0) {
+                    setLocale("en");
+                    recreate();
+
+                }
+                else if (which == 1) {
+                    setLocale("in");
+                    recreate();
+                }
+                dialog.dismiss();
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void setLocale (String lang) {
+        Locale locale = new Locale(lang);
+        Locale.setDefault(locale);
+        Configuration configuration = new Configuration();
+        configuration.locale = locale;
+        getBaseContext().getResources().updateConfiguration(configuration, getBaseContext().getResources().getDisplayMetrics());
+        SharedPreferences.Editor editor = getSharedPreferences("Settings", MODE_PRIVATE).edit();
+        editor.putString("My_Lang", lang);
+        editor.apply();
+    }
+
+    private void loadLocale() {
+        SharedPreferences preferences = getSharedPreferences("Settings", MODE_PRIVATE);
+        String language = preferences.getString("My_Lang", "");
+        setLocale(language);
     }
 }

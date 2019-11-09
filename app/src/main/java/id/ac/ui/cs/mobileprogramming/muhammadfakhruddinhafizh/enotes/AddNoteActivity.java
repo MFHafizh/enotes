@@ -4,10 +4,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.BitmapFactory;
@@ -19,7 +23,9 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -27,16 +33,20 @@ import java.lang.ref.WeakReference;
 
 import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.database.NoteDatabase;
 import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.models.Note;
+import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.services.GpsService;
 
 public class AddNoteActivity extends AppCompatActivity {
 
     private static final int GALLERY_REQUEST_CODE = 123;
+    private static final int GPS_REQUEST_CODE = 124;
     private TextInputEditText title, content;
     private ImageView imageView;
     private NoteDatabase noteDatabase;
     private Note note;
     private boolean update;
-    private String imagePath;
+    private String imagePath, location;
+    private BroadcastReceiver broadcastReceiver;
+    private TextView locationTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,37 +56,26 @@ public class AddNoteActivity extends AppCompatActivity {
         content = findViewById(R.id.content);
         imageView = findViewById(R.id.imageView);
         noteDatabase = NoteDatabase.getInstance(AddNoteActivity.this);
+        locationTextView = findViewById(R.id.location);
         imagePath = null;
-        Button btnSave = findViewById(R.id.btnsave);
-        Button btnAddImg = findViewById(R.id.btnImage);
+        ImageButton addImageBtn = findViewById(R.id.add_img_btn);
+        Button saveNoteBtn = findViewById(R.id.save_btn);
         if ( (note = (Note) getIntent().getSerializableExtra("note"))!=null ){
-            getSupportActionBar().setTitle("Update Note");
+            getSupportActionBar().setTitle(getString(R.string.update));
             update = true;
-            btnSave.setText("Update");
             title.setText(note.getTitle());
             content.setText(note.getContent());
+            locationTextView.setText(getString(R.string.location) + " " +note.getLocation());
             if (note.getImagePath()!=null) {
                 imageView.setImageBitmap(BitmapFactory.decodeFile(note.getImagePath()));
             }
         }
 
-        btnSave.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (update){
-                    note.setContent(content.getText().toString());
-                    note.setTitle(title.getText().toString());
-                    setNoteImage(note, imagePath);
-                    noteDatabase.getNoteDao().updateNote(note);
-                    setResult(note,2);
-                }else {
-                    note = new Note(content.getText().toString(), title.getText().toString(), imagePath);
-                    new InsertTask(AddNoteActivity.this,note).execute();
-                }
-            }
-        });
+        if (isGpsPermissionGranted()) {
+            getLocation();
+        }
 
-        btnAddImg.setOnClickListener(new View.OnClickListener() {
+        addImageBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (isReadStoragePermissionGranted()) {
@@ -84,7 +83,41 @@ public class AddNoteActivity extends AppCompatActivity {
                 }
             }
         });
+
+        saveNoteBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (update){
+                    note.setContent(content.getText().toString());
+                    note.setTitle(title.getText().toString());
+                    setNoteImage(note, imagePath);
+                    note.setLocation(location);
+                    noteDatabase.getNoteDao().updateNote(note);
+                    Log.v("NOTES IMAGE", note.getImagePath()==null? "null":note.getImagePath());
+                    setResult(note,2);
+                }else {
+                    note = new Note(content.getText().toString(), title.getText().toString(), imagePath, location);
+                    new InsertTask(AddNoteActivity.this,note).execute();
+                }
+            }
+        });
     }
+
+    @Override
+    protected void onResume() {
+        Log.v("RESUME", "ON RESUME");
+        super.onResume();
+        if(broadcastReceiver == null){
+            broadcastReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    location = (String) intent.getExtras().get("coordinates");
+                }
+            };
+        }
+        registerReceiver(broadcastReceiver,new IntentFilter("location_update"));
+    }
+
 
     private void setResult(Note note, int flag){
         setResult(flag,new Intent().putExtra("note",note));
@@ -191,6 +224,13 @@ public class AddNoteActivity extends AppCompatActivity {
                 pickFromGallery();
             }
         }
+        if(requestCode == 124){
+            if( grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED){
+                getLocation();
+            }else {
+                isGpsPermissionGranted();
+            }
+        }
     }
 
     public void setNoteImage(Note note, @Nullable String imagePath) {
@@ -199,6 +239,32 @@ public class AddNoteActivity extends AppCompatActivity {
         }
         else {
             note.setImagePath(note.getImagePath());
+        }
+    }
+
+    public boolean isGpsPermissionGranted() {
+        if(Build.VERSION.SDK_INT >= 23 && ContextCompat.checkSelfPermission(
+                this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},124);
+
+            return true;
+        }
+        return true;
+    }
+
+    public void getLocation() {
+        Log.v("LOCATION", "GET LOCATION");
+        Intent intent = new Intent(getApplicationContext(), GpsService.class);
+        startService(intent);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if(broadcastReceiver != null){
+            unregisterReceiver(broadcastReceiver);
         }
     }
 }

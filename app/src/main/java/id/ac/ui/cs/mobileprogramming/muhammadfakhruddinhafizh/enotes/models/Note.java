@@ -26,16 +26,24 @@ public class Note implements Serializable {
 
     private String imagePath;
 
-    public Note(String content, String title, @Nullable String imagePath) {
+    private String location;
+
+
+    public Note(String content, String title, @Nullable String imagePath, String location) {
         this.content = content;
         this.title = title;
         this.dateLong = System.currentTimeMillis();
-        if (imagePath != null) {
-            this.imagePath = imagePath;
-        }
+        this.imagePath = imagePath;
+        this.location = location;
     }
 
+    public String getLocation() {
+        return location;
+    }
 
+    public void setLocation(String location) {
+        this.location = location;
+    }
 
     public Long getDateLong() {
         return dateLong;

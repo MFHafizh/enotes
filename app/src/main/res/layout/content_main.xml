@@ -15,7 +15,7 @@
         android:layout_height="wrap_content"
         android:textSize="40sp"
         android:gravity="center"
-        android:text="No Notes Found, Let's Add Some!"
+        android:text="@string/no_notes"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"

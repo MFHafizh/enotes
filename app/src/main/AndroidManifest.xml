@@ -3,6 +3,9 @@
     package="id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
         android:allowBackup="true"
@@ -23,8 +26,9 @@
         </activity>
         <activity
             android:name=".AddNoteActivity"
-            android:label="Add Notes"
-            />
+            android:label="@string/add_note">
+        </activity>
+        <service android:name=".services.GpsService"/>
     </application>
 
 </manifest>

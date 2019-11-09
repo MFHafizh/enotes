@@ -1,67 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_margin="4dp"
-    tools:context="id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.AddNoteActivity"
-    android:orientation="vertical">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/txtInput"
+    <include layout="@layout/content_add_note"/>
+
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <com.google.android.material.textfield.TextInputEditText
-            android:inputType="text"
-            android:id="@+id/title"
-            android:hint="Title"
+        android:layout_height="48dp"
+        android:layout_gravity="bottom"
+        android:background="@color/md_grey_50"
+        >
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_gravity="top"
+            android:background="@color/md_blue_grey_100"
+            />
+
+        <ImageButton
+            android:id="@+id/add_img_btn"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="left"
+            android:background="?selectableItemBackgroundBorderless"
+            android:padding="12dp"
+            android:tint="@color/md_blue_grey_600"
+            android:src="@drawable/ic_add_a_photo_black_24dp"
+            />
+
+        <TextView
+            android:id="@+id/location"
+            android:layout_width="318dp"
+            android:layout_height="48dp"
+            android:layout_marginLeft="48dp"
+            android:layout_marginRight="48dp"
+            android:background="@null"
+            android:gravity="center"
             android:singleLine="true"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <LinearLayout
-        android:layout_below="@+id/txtInput"
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/txtInput2"
-            android:layout_width="match_parent"
-            android:layout_weight="1"
-            android:layout_height="0dp">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/content"
-                android:hint="Content"
-                android:gravity="top"
-                android:singleLine="false"
-                android:inputType="textMultiLine|textNoSuggestions"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/imageView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:text="Location"
+            android:textColor="@color/md_blue_grey_600"
+            android:textSize="@dimen/h5" />
 
         <Button
-            android:id="@+id/btnsave"
-            android:text="Save"
-            android:layout_gravity="center"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:id="@+id/save_btn"
+            android:layout_width="60dp"
+            android:layout_height="48dp"
+            android:layout_gravity="right"
+            android:background="?selectableItemBackgroundBorderless"
+            android:padding="12dp"
+            android:tint="@color/md_blue_grey_600"
+            android:text="Save"/>
+    </FrameLayout>
 
-        <Button
-            android:id="@+id/btnImage"
-            android:text="Add Image"
-            android:layout_gravity="center"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-    </LinearLayout>
-
-</RelativeLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

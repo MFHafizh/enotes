@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">enotes</string>
+    <string name="add_note">Tambah Notes</string>
+    <string name="chooseLang">Pilih Bahasa</string>
+    <string name="content">Konten</string>
+    <string name="delete">Hapus</string>
+    <string name="delete_alert">Apakah anda yakin?</string>
+    <string name="languages">Ganti bahasa</string>
+    <string name="no_notes">Tidak ada notes</string>
+    <string name="select_opt">Pilhan</string>
+    <string name="title">Judul</string>
+    <string name="update">Perbarui</string>
+    <string name="untitled">Tidak ada judul</string>
+    <string name="location">"Dibuat di: "</string>
+</resources>
