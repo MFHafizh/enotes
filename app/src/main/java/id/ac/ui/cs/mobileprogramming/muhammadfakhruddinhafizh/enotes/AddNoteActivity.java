@@ -251,11 +251,10 @@ public class AddNoteActivity extends AppCompatActivity {
 
             return true;
         }
-        return true;
+        return false;
     }
 
     public void getLocation() {
-        Log.v("LOCATION", "GET LOCATION");
         Intent intent = new Intent(getApplicationContext(), GpsService.class);
         startService(intent);
     }
