@@ -7,12 +7,15 @@ import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.location.Geocoder;
 import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -126,15 +129,23 @@ public class AddNoteActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
+    protected void onResume() {
+        super.onResume();
         if (!checkLocationPermissions()) {
             requestLocationPermissions();
         } else {
             getAddress();
         }
+
+        if (!hasNetworkConnection()) {
+            openNetworkDialog();
+        }
     }
 
+    private void openNetworkDialog() {
+        NetworkConnectivityDialog networkConnectivityDialog = new NetworkConnectivityDialog();
+        networkConnectivityDialog.show(getSupportFragmentManager(), "network dialog");
+    }
 
     private void updateLocation() {
         if (mLastLocation != null) {
@@ -466,4 +477,20 @@ public class AddNoteActivity extends AppCompatActivity {
                 .setAction(getString(actionStringId), listener).show();
     }
 
+    private boolean hasNetworkConnection() {
+        boolean haveConnectedWifi = false;
+        boolean haveConnectedMobile = false;
+
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo[] netInfo = cm.getAllNetworkInfo();
+        for (NetworkInfo ni : netInfo) {
+            if (ni.getTypeName().equalsIgnoreCase("WIFI"))
+                if (ni.isConnected())
+                    haveConnectedWifi = true;
+            if (ni.getTypeName().equalsIgnoreCase("MOBILE"))
+                if (ni.isConnected())
+                    haveConnectedMobile = true;
+        }
+        return haveConnectedWifi || haveConnectedMobile;
+    }
 }

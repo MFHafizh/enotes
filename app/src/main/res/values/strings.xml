@@ -34,4 +34,6 @@
     <string name="permission_denied_explanation" translatable="false">Permission was denied, but is needed for core
         functionality.</string>
     <string name="settings" translatable="false">Settings</string>
+    <string name="network_unavailable" translatable="false">network is unavailable</string>
+    <string name="network_dialog_message" translatable="false">This app need internet connection to work propperly</string>
 </resources>
