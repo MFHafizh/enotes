@@ -24,6 +24,8 @@ import android.os.Handler;
 import android.os.ResultReceiver;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -55,7 +57,7 @@ public class AddNoteActivity extends AppCompatActivity {
     private Note note;
     private boolean update;
     private String imagePath;
-    private TextView locationTextView;
+    private TextView locationTextView, wordCount;
 
     private static final int LOCATION_PERMISSIONS_REQUEST_CODE = 34;
     private static final int GALLERY_PERMISSIONS_REQUEST_CODE = 33;
@@ -84,6 +86,7 @@ public class AddNoteActivity extends AppCompatActivity {
         imageView = findViewById(R.id.imageView);
         noteDatabase = NoteDatabase.getInstance(AddNoteActivity.this);
         locationTextView = findViewById(R.id.location);
+        wordCount = findViewById(R.id.word_count_textview);
         imagePath = null;
         ImageButton addImageBtn = findViewById(R.id.add_img_btn);
         Button saveNoteBtn = findViewById(R.id.save_btn);
@@ -124,6 +127,25 @@ public class AddNoteActivity extends AppCompatActivity {
                     note = new Note(content.getText().toString(), title.getText().toString(), imagePath, mAddressOutput);
                     new InsertTask(AddNoteActivity.this,note).execute();
                 }
+            }
+        });
+
+        wordCount.setText(countWord(content.getText().toString()) + " words");
+
+        content.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                wordCount.setText(countWord(content.getText().toString()) + " words");
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
             }
         });
     }
@@ -492,5 +514,11 @@ public class AddNoteActivity extends AppCompatActivity {
                     haveConnectedMobile = true;
         }
         return haveConnectedWifi || haveConnectedMobile;
+    }
+
+    public native int countWord(String str);
+
+    static {
+        System.loadLibrary("cpp_code");
     }
 }
