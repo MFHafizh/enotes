@@ -9,11 +9,11 @@ import androidx.room.Update;
 import java.util.List;
 
 import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.models.Note;
-import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.utils.Constant;
+import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.utils.Constants;
 
 @Dao
 public interface NoteDao {
-    @Query("SELECT * FROM " + Constant.TABLE_NAME_NOTE)
+    @Query("SELECT * FROM " + Constants.TABLE_NAME_NOTE)
     List<Note> getNotes();
 
 

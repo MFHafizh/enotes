@@ -7,7 +7,7 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
 import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.models.Note;
-import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.utils.Constant;
+import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.utils.Constants;
 
 @Database(entities = { Note.class }, version = 1)
 public abstract class NoteDatabase extends RoomDatabase {
@@ -26,7 +26,7 @@ public abstract class NoteDatabase extends RoomDatabase {
     private static NoteDatabase buildDatabaseInstance(Context context) {
         return Room.databaseBuilder(context,
                 NoteDatabase.class,
-                Constant.DB_NAME)
+                Constants.DB_NAME)
                 .allowMainThreadQueries().build();
     }
 

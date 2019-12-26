@@ -4,21 +4,21 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.BitmapFactory;
+import android.location.Geocoder;
+import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.ResultReceiver;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
@@ -31,27 +31,49 @@ import com.google.android.material.textfield.TextInputEditText;
 
 import java.lang.ref.WeakReference;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+
 import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.database.NoteDatabase;
 import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.models.Note;
-import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.services.GpsService;
+import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.services.FetchAddressIntentService;
+import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.utils.Constants;
 
 public class AddNoteActivity extends AppCompatActivity {
-
+    private static final String TAG = AddNoteActivity.class.getSimpleName();
     private static final int GALLERY_REQUEST_CODE = 123;
-    private static final int GPS_REQUEST_CODE = 124;
     private TextInputEditText title, content;
     private ImageView imageView;
     private NoteDatabase noteDatabase;
     private Note note;
     private boolean update;
-    private String imagePath, location;
-    private BroadcastReceiver broadcastReceiver;
+    private String imagePath;
     private TextView locationTextView;
+
+    private static final int LOCATION_PERMISSIONS_REQUEST_CODE = 34;
+    private static final int GALLERY_PERMISSIONS_REQUEST_CODE = 33;
+    private static final String ADDRESS_REQUESTED_KEY = "address-request-pending";
+    private static final String LOCATION_ADDRESS_KEY = "location-address";
+    private FusedLocationProviderClient mFusedLocationClient;
+    private Location mLastLocation;
+    private boolean mAddressRequested;
+    private String mAddressOutput;
+    private AddressResultReceiver mResultReceiver;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_note);
+        mResultReceiver = new AddressResultReceiver(new Handler());
+        // Set defaults, then update using values stored in the Bundle.
+        mAddressRequested = false;
+        mAddressOutput = "";
+        updateValuesFromBundle(savedInstanceState);
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
         title = findViewById(R.id.title);
         content = findViewById(R.id.content);
         imageView = findViewById(R.id.imageView);
@@ -71,10 +93,6 @@ public class AddNoteActivity extends AppCompatActivity {
             }
         }
 
-        if (isGpsPermissionGranted()) {
-            getLocation();
-        }
-
         addImageBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -91,12 +109,14 @@ public class AddNoteActivity extends AppCompatActivity {
                     note.setContent(content.getText().toString());
                     note.setTitle(title.getText().toString());
                     setNoteImage(note, imagePath);
-                    note.setLocation(location);
+//                    updateLocation();
+                    note.setLocation(mAddressOutput);
                     noteDatabase.getNoteDao().updateNote(note);
                     Log.v("NOTES IMAGE", note.getImagePath()==null? "null":note.getImagePath());
                     setResult(note,2);
                 }else {
-                    note = new Note(content.getText().toString(), title.getText().toString(), imagePath, location);
+                    updateLocation();
+                    note = new Note(content.getText().toString(), title.getText().toString(), imagePath, mAddressOutput);
                     new InsertTask(AddNoteActivity.this,note).execute();
                 }
             }
@@ -104,20 +124,27 @@ public class AddNoteActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onResume() {
-        Log.v("RESUME", "ON RESUME");
-        super.onResume();
-        if(broadcastReceiver == null){
-            broadcastReceiver = new BroadcastReceiver() {
-                @Override
-                public void onReceive(Context context, Intent intent) {
-                    location = (String) intent.getExtras().get("coordinates");
-                }
-            };
+    protected void onStart() {
+        super.onStart();
+        if (!checkLocationPermissions()) {
+            requestLocationPermissions();
+        } else {
+            getAddress();
         }
-        registerReceiver(broadcastReceiver,new IntentFilter("location_update"));
     }
 
+
+    private void updateLocation() {
+        if (mLastLocation != null) {
+            startIntentService();
+            return;
+        }
+
+        // If we have not yet retrieved the user location, we process the user's request by setting
+        // mAddressRequested to true. As far as the user is concerned, pressing the Fetch Address button
+        // immediately kicks off the process of getting the address.
+        mAddressRequested = true;
+    }
 
     private void setResult(Note note, int flag){
         setResult(flag,new Intent().putExtra("note",note));
@@ -203,7 +230,7 @@ public class AddNoteActivity extends AppCompatActivity {
             } else {
 
                 Log.v("READ STORAGE","Permission is revoked1");
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 3);
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, GALLERY_PERMISSIONS_REQUEST_CODE);
                 return false;
             }
         }
@@ -216,7 +243,7 @@ public class AddNoteActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode==3) {
+        if (requestCode == GALLERY_PERMISSIONS_REQUEST_CODE) {
             Log.d("READ STORAGE", "External storage1");
             if(grantResults[0]== PackageManager.PERMISSION_GRANTED){
                 Log.v("READ STORAGE","Permission: "+permissions[0]+ "was "+grantResults[0]);
@@ -224,12 +251,43 @@ public class AddNoteActivity extends AppCompatActivity {
                 pickFromGallery();
             }
         }
-        if(requestCode == 124){
-            if( grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED){
-                getLocation();
-            }else {
-                isGpsPermissionGranted();
-            }
+
+        else if (requestCode == LOCATION_PERMISSIONS_REQUEST_CODE) {
+            if (grantResults.length <= 0) {
+                // If user interaction was interrupted, the permission request is cancelled and you
+                // receive empty arrays.
+                Log.i(TAG, "User interaction was cancelled.");
+            } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted.
+                getAddress();
+            } /*else {
+                // Permission denied.
+
+                // Notify the user via a SnackBar that they have rejected a core permission for the
+                // app, which makes the Activity useless. In a real app, core permissions would
+                // typically be best requested during a welcome-screen flow.
+
+                // Additionally, it is important to remember that a permission might have been
+                // rejected without asking the user for permission (device policy or "Never ask
+                // again" prompts). Therefore, a user interface affordance is typically implemented
+                // when permissions are denied. Otherwise, your app could appear unresponsive to
+                // touches or interactions which have required permissions.
+                showSnackbar(R.string.permission_denied_explanation, R.string.settings,
+                        new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                // Build intent that displays the App settings screen.
+                                Intent intent = new Intent();
+                                intent.setAction(
+                                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                Uri uri = Uri.fromParts("package",
+                                        BuildConfig.APPLICATION_ID, null);
+                                intent.setData(uri);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(intent);
+                            }
+                        });
+            }*/
         }
     }
 
@@ -242,28 +300,126 @@ public class AddNoteActivity extends AppCompatActivity {
         }
     }
 
-    public boolean isGpsPermissionGranted() {
-        if(Build.VERSION.SDK_INT >= 23 && ContextCompat.checkSelfPermission(
-                this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
-
-            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},124);
-
-            return true;
+    /**
+     * Receiver for data sent from FetchAddressIntentService.
+     */
+    private class AddressResultReceiver extends ResultReceiver {
+        AddressResultReceiver(Handler handler) {
+            super(handler);
         }
-        return false;
+
+        /**
+         *  Receives data sent from FetchAddressIntentService and updates the UI in MainActivity.
+         */
+        @Override
+        protected void onReceiveResult(int resultCode, Bundle resultData) {
+
+            // Display the address string or an error message sent from the intent service.
+            mAddressOutput = resultData.getString(Constants.RESULT_DATA_KEY);
+            //displayAddressOutput();
+
+            // Show a toast message if an address was found.
+            if (resultCode == Constants.SUCCESS_RESULT) {
+                //showToast(getString(R.string.address_found));
+            }
+
+            // Reset. Enable the Fetch Address button and stop showing the progress bar.
+            mAddressRequested = false;
+            //updateUIWidgets();
+        }
     }
 
-    public void getLocation() {
-        Intent intent = new Intent(getApplicationContext(), GpsService.class);
+    /**
+     * Return the current state of the permissions needed.
+     */
+    private boolean checkLocationPermissions() {
+        int permissionState = ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION);
+        return permissionState == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestLocationPermissions() {
+        boolean shouldProvideRationale =
+                ActivityCompat.shouldShowRequestPermissionRationale(this,
+                        Manifest.permission.ACCESS_FINE_LOCATION);
+            Log.i(TAG, "Requesting permission");
+            // Request permission. It's possible this can be auto answered if device policy
+            // sets the permission in a given state or the user denied the permission
+            // previously and checked "Never ask again".
+            ActivityCompat.requestPermissions(AddNoteActivity.this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    LOCATION_PERMISSIONS_REQUEST_CODE);
+    }
+
+    /**
+     * Gets the address for the last known location.
+     */
+    @SuppressWarnings("MissingPermission")
+    private void getAddress() {
+        Log.v(TAG, "GET ADDRESS");
+        mFusedLocationClient.getLastLocation()
+                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        if (location == null) {
+                            Log.w(TAG, "onSuccess:null");
+                            return;
+                        }
+
+                        mLastLocation = location;
+
+                        // Determine whether a Geocoder is available.
+                        if (!Geocoder.isPresent()) {
+                            mAddressOutput = mLastLocation.getLongitude() + " " + mLastLocation.getLatitude();
+                            return;
+                        }
+                        startIntentService();
+                    }
+                })
+                .addOnFailureListener(this, new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w(TAG, "getLastLocation:onFailure", e);
+                    }
+                });
+    }
+
+    /**
+     * Updates fields based on data stored in the bundle.
+     */
+    private void updateValuesFromBundle(Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            // Check savedInstanceState to see if the address was previously requested.
+            if (savedInstanceState.keySet().contains(ADDRESS_REQUESTED_KEY)) {
+                mAddressRequested = savedInstanceState.getBoolean(ADDRESS_REQUESTED_KEY);
+            }
+            // Check savedInstanceState to see if the location address string was previously found
+            // and stored in the Bundle. If it was found, display the address string in the UI.
+            if (savedInstanceState.keySet().contains(LOCATION_ADDRESS_KEY)) {
+                mAddressOutput = savedInstanceState.getString(LOCATION_ADDRESS_KEY);
+                //displayAddressOutput();
+            }
+        }
+    }
+
+    /**
+     * Creates an intent, adds location data to it as an extra, and starts the intent service for
+     * fetching an address.
+     */
+    private void startIntentService() {
+        // Create an intent for passing to the intent service responsible for fetching the address.
+        Intent intent = new Intent(this, FetchAddressIntentService.class);
+
+        // Pass the result receiver as an extra to the service.
+        intent.putExtra(Constants.RECEIVER, mResultReceiver);
+
+        // Pass the location data as an extra to the service.
+        intent.putExtra(Constants.LOCATION_DATA_EXTRA, mLastLocation);
+
+        // Start the service. If the service isn't already running, it is instantiated and started
+        // (creating a process for it if needed); if it is running then it remains running. The
+        // service kills itself automatically once all intents are processed.
         startService(intent);
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if(broadcastReceiver != null){
-            unregisterReceiver(broadcastReceiver);
-        }
-    }
 }

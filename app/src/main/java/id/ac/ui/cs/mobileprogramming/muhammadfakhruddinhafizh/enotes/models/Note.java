@@ -8,10 +8,10 @@ import androidx.room.PrimaryKey;
 import java.io.Serializable;
 import java.util.Date;
 
-import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.utils.Constant;
+import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.utils.Constants;
 import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.utils.DateRoomConverter;
 
-@Entity(tableName = Constant.TABLE_NAME_NOTE)
+@Entity(tableName = Constants.TABLE_NAME_NOTE)
 public class Note implements Serializable {
 
     @PrimaryKey(autoGenerate = true)
@@ -120,6 +120,7 @@ public class Note implements Serializable {
                 ", content='" + content + '\'' +
                 ", title='" + title + '\'' +
                 ", date=" + getDate() +
+                ", location=" + getLocation() +
                 '}';
     }
 }
