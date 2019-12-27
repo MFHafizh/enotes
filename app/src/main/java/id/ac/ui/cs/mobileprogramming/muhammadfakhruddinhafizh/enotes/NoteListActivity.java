@@ -1,6 +1,8 @@
 package id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes;
 
+import android.app.AlarmManager;
 import android.app.AlertDialog;
+import android.app.PendingIntent;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -29,12 +31,14 @@ import com.google.android.material.navigation.NavigationView;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
 import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.adapter.NotesAdapter;
 import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.database.NoteDatabase;
 import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.models.Note;
+import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.utils.Constants;
 
 public class NoteListActivity extends AppCompatActivity implements NotesAdapter.OnNoteItemClick, NavigationView.OnNavigationItemSelectedListener {
 
@@ -55,6 +59,7 @@ public class NoteListActivity extends AppCompatActivity implements NotesAdapter.
         initializeViews();
         loadLocale();
         displayList();
+        setNotification();
     }
 
     @Override
@@ -67,6 +72,20 @@ public class NoteListActivity extends AppCompatActivity implements NotesAdapter.
     private void displayList(){
         noteDatabase = NoteDatabase.getInstance(NoteListActivity.this);
         new RetrieveTask(this).execute();
+    }
+
+    private void setNotification() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 19);
+        calendar.set(Calendar.MINUTE, 00);
+
+        Intent intent = new Intent(getApplicationContext(), NotificationReceiver.class);
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), Constants.NOTIFICATION_CODE, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);
+
     }
 
     private static class RetrieveTask extends AsyncTask<Void,Void,List<Note>> {
