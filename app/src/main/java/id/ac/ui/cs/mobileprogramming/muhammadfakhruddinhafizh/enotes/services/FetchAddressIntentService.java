@@ -26,6 +26,8 @@ import android.os.ResultReceiver;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.google.android.gms.location.LocationListener;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +43,6 @@ import id.ac.ui.cs.mobileprogramming.muhammadfakhruddinhafizh.enotes.utils.Const
  */
 public class FetchAddressIntentService extends IntentService {
     private static final String TAG = "FetchAddressIS";
-
     /**
      * The receiver where results are forwarded from this service.
      */
@@ -128,7 +129,7 @@ public class FetchAddressIntentService extends IntentService {
         // Handle case where no address was found.
         if (addresses == null || addresses.size()  == 0) {
             if (errorMessage.isEmpty()) {
-                errorMessage = getString(R.string.no_address_found);
+                errorMessage = getString(R.string.no_address_found) + " for " + location.getLatitude() + " " + location.getLongitude();
                 Log.e(TAG, errorMessage);
             }
             deliverResultToReceiver(Constants.FAILURE_RESULT, errorMessage);

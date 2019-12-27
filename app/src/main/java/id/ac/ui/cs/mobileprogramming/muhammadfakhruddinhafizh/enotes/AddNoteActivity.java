@@ -78,7 +78,7 @@ public class AddNoteActivity extends AppCompatActivity {
         // Set defaults, then update using values stored in the Bundle.
         mAddressRequested = false;
         mAddressOutput = "";
-        updateValuesFromBundle(savedInstanceState);
+        //updateValuesFromBundle(savedInstanceState);
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         title = findViewById(R.id.title);
@@ -382,7 +382,9 @@ public class AddNoteActivity extends AppCompatActivity {
 
             // Show a toast message if an address was found.
             if (resultCode == Constants.SUCCESS_RESULT) {
-                //showToast(getString(R.string.address_found));
+                if (!update) {
+                    locationTextView.setText(mAddressOutput);
+                }
             }
 
             // Reset. Enable the Fetch Address button and stop showing the progress bar.
