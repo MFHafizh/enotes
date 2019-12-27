@@ -77,7 +77,6 @@ public class NoteListActivity extends AppCompatActivity implements NotesAdapter.
     private void setNotification() {
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.HOUR_OF_DAY, 19);
-        calendar.set(Calendar.MINUTE, 00);
 
         Intent intent = new Intent(getApplicationContext(), NotificationReceiver.class);
 

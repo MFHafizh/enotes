@@ -41,7 +41,7 @@ public class NotificationReceiver extends BroadcastReceiver {
                 Constants.NOTIFICATION_CHANNEL_ID)
                 .setContentIntent(pendingIntent)
                 .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle("Letd take a note")
+                .setContentTitle("Let's take a note")
                 .setContentText("You haven't create or update a note. Let's do some.")
                 .setAutoCancel(true);
 
