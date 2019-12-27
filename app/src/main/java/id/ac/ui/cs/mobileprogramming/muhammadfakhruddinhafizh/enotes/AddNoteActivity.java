@@ -78,7 +78,6 @@ public class AddNoteActivity extends AppCompatActivity {
         // Set defaults, then update using values stored in the Bundle.
         mAddressRequested = false;
         mAddressOutput = "";
-        //updateValuesFromBundle(savedInstanceState);
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         title = findViewById(R.id.title);
@@ -151,8 +150,8 @@ public class AddNoteActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
+    protected void onStart() {
+        super.onStart();
         if (!checkLocationPermissions()) {
             requestLocationPermissions();
         } else {
@@ -383,7 +382,7 @@ public class AddNoteActivity extends AppCompatActivity {
             // Show a toast message if an address was found.
             if (resultCode == Constants.SUCCESS_RESULT) {
                 if (!update) {
-                    locationTextView.setText(mAddressOutput);
+                    locationTextView.setText("Location: " + mAddressOutput);
                 }
             }
 
@@ -446,24 +445,6 @@ public class AddNoteActivity extends AppCompatActivity {
                         Log.w(TAG, "getLastLocation:onFailure", e);
                     }
                 });
-    }
-
-    /**
-     * Updates fields based on data stored in the bundle.
-     */
-    private void updateValuesFromBundle(Bundle savedInstanceState) {
-        if (savedInstanceState != null) {
-            // Check savedInstanceState to see if the address was previously requested.
-            if (savedInstanceState.keySet().contains(ADDRESS_REQUESTED_KEY)) {
-                mAddressRequested = savedInstanceState.getBoolean(ADDRESS_REQUESTED_KEY);
-            }
-            // Check savedInstanceState to see if the location address string was previously found
-            // and stored in the Bundle. If it was found, display the address string in the UI.
-            if (savedInstanceState.keySet().contains(LOCATION_ADDRESS_KEY)) {
-                mAddressOutput = savedInstanceState.getString(LOCATION_ADDRESS_KEY);
-                //displayAddressOutput();
-            }
-        }
     }
 
     /**
